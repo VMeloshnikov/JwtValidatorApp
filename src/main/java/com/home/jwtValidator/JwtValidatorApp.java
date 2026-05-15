@@ -17,11 +17,9 @@ import java.util.Date;
 
 public class JwtValidatorApp {
 
-    // 🔑 ВНЕШНЕЕ ТРЕБОВАНИЕ: Секрет для HMAC-SHA256 (минимум 32 символа / 256 бит)
+    // Секрет для HMAC-SHA256 (минимум 32 символа / 256 бит)
     private static final String SECRET_KEY = "a-string-secret-at-least-256-bits-long";
 
-    // 📥 ВСТАВЬТЕ СЮДА ВАШ JWT ТОКЕН
-    // ⚠️ ВАЖНО: Токен должен быть подписан ЭТИМ ЖЕ SECRET_KEY, иначе получите SignatureException
     private static final String TOKEN_TO_VALIDATE =
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30";
 
@@ -30,7 +28,6 @@ public class JwtValidatorApp {
         System.out.println("🔐 НАЧАЛО ВАЛИДАЦИИ JWT ТОКЕНА");
         System.out.println("══════════════════════════════════════════\n");
 
-        // 🔍 ШАГ 1: Проверка базовой структуры
         System.out.println("📝 Шаг 1: Проверка формата JWT (Header.Payload.Signature)...");
         if (TOKEN_TO_VALIDATE == null || TOKEN_TO_VALIDATE.isBlank()) {
             System.out.println("❌ Ошибка: Токен пуст или null.");
@@ -43,7 +40,6 @@ public class JwtValidatorApp {
         }
         System.out.println("✅ Формат корректен. Обнаружены Header, Payload, Signature.\n");
 
-        // 🔑 ШАГ 2: Подготовка криптографического ключа
         System.out.println("🔑 Шаг 2: Инициализация ключа подписи...");
         byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
@@ -53,10 +49,8 @@ public class JwtValidatorApp {
         var signingKey = Keys.hmacShaKeyFor(keyBytes);
         System.out.println("✅ Ключ успешно сформирован (алгоритм: HMAC-SHA256).\n");
 
-        // 🔐 ШАГ 3: Парсинг и верификация цифровой подписи
         System.out.println("🔍 Шаг 3: Парсинг и криптографическая проверка подписи...");
         try {
-            // setAllowedClockSkewSeconds(30) компенсирует рассинхронизацию часов до 30 сек
             Jws<Claims> jws = Jwts.parserBuilder()
                     .setSigningKey(signingKey)
                     .setAllowedClockSkewSeconds(30)
@@ -65,7 +59,6 @@ public class JwtValidatorApp {
 
             System.out.println("✅ Подпись верна. Целостность данных подтверждена.\n");
 
-            // ⏱️ ШАГ 4: Проверка временных меток и клеймов (NULL-SAFE)
             System.out.println("⏱️  Шаг 4: Анализ пейлоада и проверка временных меток (UTC)...");
             Claims claims = jws.getBody();
             Instant now = Instant.now();
@@ -78,7 +71,6 @@ public class JwtValidatorApp {
             Date iatDate = claims.getIssuedAt();
             System.out.println("   • Issued At (iat): " + (iatDate == null ? "❌ Отсутствует" : fmt.format(iatDate.toInstant())));
 
-            // 🔑 ИСПРАВЛЕНИЕ NULLPOINTEREXCEPTION для exp
             Date expDate = claims.getExpiration();
             if (expDate == null) {
                 System.out.println("   • Expiration (exp): ❌ Отсутствует (токен бессрочный)");
@@ -96,7 +88,6 @@ public class JwtValidatorApp {
             }
             System.out.println();
 
-            // 🎉 ИТОГ
             System.out.println("══════════════════════════════════════════");
             System.out.println("🟢 ВАЛИДАЦИЯ ПРОШЛА УСПЕШНО");
             System.out.println("══════════════════════════════════════════");
